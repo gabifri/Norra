@@ -1,0 +1,126 @@
+{
+  "version": 1.0,
+  "backupDate": "2026-06-04",
+  "user": "Alex Marketing",
+  "email": "alex.norra@example.com",
+  "moods": [
+    {"timestamp": 1776510000000, "emotionType": "calme", "intensity": 6, "note": "Une journée assez neutre."},
+    {"timestamp": 1776600000000, "emotionType": "anxiété", "intensity": 7, "note": "Stress au travail."},
+    {"timestamp": 1776700000000, "emotionType": "tristesse", "intensity": 5, "note": "Un peu nostalgique ce matin."},
+    {"timestamp": 1776800000000, "emotionType": "joie", "intensity": 8, "note": "Bonne soirée !"},
+    {"timestamp": 1776900000000, "emotionType": "vide", "intensity": 6, "note": ""},
+    {"timestamp": 1777000000000, "emotionType": "colère", "intensity": 9, "note": "Dispute avec un ami."},
+    {"timestamp": 1777100000000, "emotionType": "anxiété", "intensity": 8, "note": "L'angoisse persiste."},
+    {"timestamp": 1777200000000, "emotionType": "serein", "intensity": 7, "note": "Méditation efficace."},
+    {"timestamp": 1777300000000, "emotionType": "joie", "intensity": 6, "note": "Moment agréable."},
+    {"timestamp": 1777400000000, "emotionType": "peur", "intensity": 5, "note": "Pensées parasites."},
+    {"timestamp": 1777500000000, "emotionType": "triste", "intensity": 7, "note": "Coup de blues inexpliqué."},
+    {"timestamp": 1777600000000, "emotionType": "calme", "intensity": 5, "note": ""},
+    {"timestamp": 1777700000000, "emotionType": "joie", "intensity": 9, "note": "Super nouvelle !"},
+    {"timestamp": 1777800000000, "emotionType": "motive", "intensity": 8, "note": ""},
+    {"timestamp": 1777900000000, "emotionType": "serein", "intensity": 6, "note": ""},
+    {"timestamp": 1778000000000, "emotionType": "honte", "intensity": 6, "note": "Insécurité lors d'une réunion."},
+    {"timestamp": 1778100000000, "emotionType": "anxiété", "intensity": 9, "note": "Crise d'angoisse."},
+    {"timestamp": 1778200000000, "emotionType": "triste", "intensity": 8, "note": "Fatigué après la nuit agitée."},
+    {"timestamp": 1778300000000, "emotionType": "vide", "intensity": 7, "note": "Je n'ai pas fait grand chose aujourd'hui."},
+    {"timestamp": 1778400000000, "emotionType": "calme", "intensity": 6, "note": ""},
+    {"timestamp": 1778500000000, "emotionType": "fier", "intensity": 7, "note": "Promenade ressourçante."},
+    {"timestamp": 1778600000000, "emotionType": "serein", "intensity": 8, "note": "Sensation d'alignement."},
+    {"timestamp": 1778700000000, "emotionType": "colère", "intensity": 6, "note": ""},
+    {"timestamp": 1778800000000, "emotionType": "motive", "intensity": 9, "note": "J'ai réussi un projet !"},
+    {"timestamp": 1778900000000, "emotionType": "calme", "intensity": 7, "note": "Repos bien mérité."},
+    {"timestamp": 1779000000000, "emotionType": "peur", "intensity": 6, "note": "Pic de stress."},
+    {"timestamp": 1779100000000, "emotionType": "seul", "intensity": 5, "note": "Solitude."},
+    {"timestamp": 1779200000000, "emotionType": "joie", "intensity": 8, "note": ""},
+    {"timestamp": 1779300000000, "emotionType": "calme", "intensity": 7, "note": ""},
+    {"timestamp": 1779400000000, "emotionType": "vide", "intensity": 5, "note": "Rien spécial."},
+    {"timestamp": 1779500000000, "emotionType": "anxiété", "intensity": 7, "note": ""},
+    {"timestamp": 1779600000000, "emotionType": "peur", "intensity": 8, "note": "Matinée très tendue."},
+    {"timestamp": 1779700000000, "emotionType": "calme", "intensity": 6, "note": ""},
+    {"timestamp": 1779800000000, "emotionType": "fier", "intensity": 7, "note": ""},
+    {"timestamp": 1779900000000, "emotionType": "joie", "intensity": 8, "note": "Super repos."},
+    {"timestamp": 1780000000000, "emotionType": "serein", "intensity": 9, "note": "Je me sens serein."},
+    {"timestamp": 1780100000000, "emotionType": "motive", "intensity": 7, "note": ""},
+    {"timestamp": 1780200000000, "emotionType": "calme", "intensity": 6, "note": ""},
+    {"timestamp": 1780300000000, "emotionType": "joie", "intensity": 7, "note": ""},
+    {"timestamp": 1780400000000, "emotionType": "serein", "intensity": 8, "note": ""}
+  ],
+  "crisis": [
+    {"timestamp": 1776510000000, "exerciseId": "tactile_breathe", "worked": true},
+    {"timestamp": 1776800000000, "exerciseId": "SOS", "worked": true},
+    {"timestamp": 1777200000000, "exerciseId": "tipp", "worked": true},
+    {"timestamp": 1777600000000, "exerciseId": "box_breathing", "worked": false},
+    {"timestamp": 1778100000000, "exerciseId": "SOS", "worked": false},
+    {"timestamp": 1778500000000, "exerciseId": "panic_sos", "worked": true},
+    {"timestamp": 1779000000000, "exerciseId": "grounding", "worked": true},
+    {"timestamp": 1779400000000, "exerciseId": "tactile_breathe", "worked": false},
+    {"timestamp": 1779800000000, "exerciseId": "safe_place", "worked": true},
+    {"timestamp": 1780200000000, "exerciseId": "SOS", "worked": true},
+    {"timestamp": 1780400000000, "exerciseId": "butterfly", "worked": true}
+  ],
+  "medications": [
+    {
+      "id": 1,
+      "name": "Sertraline",
+      "dosageMg": 50,
+      "pillCount": 1,
+      "timeToTake": "09:00",
+      "reminderEnabled": true,
+      "intakes": "09:00,1"
+    },
+    {
+      "id": 2,
+      "name": "Alprazolam",
+      "dosageMg": 1,
+      "pillCount": 2,
+      "timeToTake": "08:00",
+      "reminderEnabled": true,
+      "intakes": "08:00,1;20:00,1"
+    }
+  ],
+  "medicationLogs": [
+    {"medicationId": 1, "dateString": "2026-05-25", "isTaken": true, "intakeIndex": 0},
+    {"medicationId": 2, "dateString": "2026-05-25", "isTaken": true, "intakeIndex": 0},
+    {"medicationId": 2, "dateString": "2026-05-25", "isTaken": false, "intakeIndex": 1},
+    
+    {"medicationId": 1, "dateString": "2026-05-26", "isTaken": true, "intakeIndex": 0},
+    {"medicationId": 2, "dateString": "2026-05-26", "isTaken": true, "intakeIndex": 0},
+    {"medicationId": 2, "dateString": "2026-05-26", "isTaken": true, "intakeIndex": 1},
+    
+    {"medicationId": 1, "dateString": "2026-05-27", "isTaken": false, "intakeIndex": 0},
+    {"medicationId": 2, "dateString": "2026-05-27", "isTaken": false, "intakeIndex": 0},
+    {"medicationId": 2, "dateString": "2026-05-27", "isTaken": true, "intakeIndex": 1},
+    
+    {"medicationId": 1, "dateString": "2026-05-28", "isTaken": true, "intakeIndex": 0},
+    {"medicationId": 2, "dateString": "2026-05-28", "isTaken": true, "intakeIndex": 0},
+    {"medicationId": 2, "dateString": "2026-05-28", "isTaken": true, "intakeIndex": 1},
+    
+    {"medicationId": 1, "dateString": "2026-05-29", "isTaken": true, "intakeIndex": 0},
+    {"medicationId": 2, "dateString": "2026-05-29", "isTaken": true, "intakeIndex": 0},
+    {"medicationId": 2, "dateString": "2026-05-29", "isTaken": true, "intakeIndex": 1},
+    
+    {"medicationId": 1, "dateString": "2026-05-30", "isTaken": true, "intakeIndex": 0},
+    {"medicationId": 2, "dateString": "2026-05-30", "isTaken": false, "intakeIndex": 0},
+    {"medicationId": 2, "dateString": "2026-05-30", "isTaken": false, "intakeIndex": 1},
+    
+    {"medicationId": 1, "dateString": "2026-05-31", "isTaken": true, "intakeIndex": 0},
+    {"medicationId": 2, "dateString": "2026-05-31", "isTaken": true, "intakeIndex": 0},
+    {"medicationId": 2, "dateString": "2026-05-31", "isTaken": false, "intakeIndex": 1},
+    
+    {"medicationId": 1, "dateString": "2026-06-01", "isTaken": true, "intakeIndex": 0},
+    {"medicationId": 2, "dateString": "2026-06-01", "isTaken": true, "intakeIndex": 0},
+    {"medicationId": 2, "dateString": "2026-06-01", "isTaken": true, "intakeIndex": 1},
+    
+    {"medicationId": 1, "dateString": "2026-06-02", "isTaken": true, "intakeIndex": 0},
+    {"medicationId": 2, "dateString": "2026-06-02", "isTaken": true, "intakeIndex": 0},
+    {"medicationId": 2, "dateString": "2026-06-02", "isTaken": false, "intakeIndex": 1},
+    
+    {"medicationId": 1, "dateString": "2026-06-03", "isTaken": true, "intakeIndex": 0},
+    {"medicationId": 2, "dateString": "2026-06-03", "isTaken": true, "intakeIndex": 0},
+    {"medicationId": 2, "dateString": "2026-06-03", "isTaken": true, "intakeIndex": 1},
+    
+    {"medicationId": 1, "dateString": "2026-06-04", "isTaken": true, "intakeIndex": 0},
+    {"medicationId": 2, "dateString": "2026-06-04", "isTaken": true, "intakeIndex": 0},
+    {"medicationId": 2, "dateString": "2026-06-04", "isTaken": false, "intakeIndex": 1}
+  ]
+}

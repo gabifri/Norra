@@ -1,0 +1,6 @@
+{
+  "name": "Norra",
+  "description": "Un assistant de soutien psychologique bienveillant avec un bouton SOS, suivi d'émotions et exercices prouvés pour gérer l'anxiété et le trouble borderline.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

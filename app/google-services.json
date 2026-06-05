@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "519242293522",
+    "project_id": "norra-e8a66",
+    "storage_bucket": "norra-e8a66.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:519242293522:android:6178a956cb958308ff13cb",
+        "android_client_info": {
+          "package_name": "com.aistudio.norra.gmxswp"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "519242293522-3kgosi18mh0hs56ia5o3kdqvdtjbhne6.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.aistudio.norra.gmxswp",
+            "certificate_hash": "c32f2ce543acb4eb56b662b29146adb630daff5f"
+          }
+        },
+        {
+          "client_id": "519242293522-c8o8li50qi13elcevkcapog0ktogguqe.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAQlXrWDlLkWHAEeQGQv4bgsU_bbUSv5uk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "519242293522-c8o8li50qi13elcevkcapog0ktogguqe.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
