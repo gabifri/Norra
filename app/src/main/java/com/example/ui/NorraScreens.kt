@@ -52,6 +52,66 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 // -------------------------------------------------------------
+// REUSABLE PILL ICON COMPOSABLE
+// -------------------------------------------------------------
+
+@Composable
+fun PillIcon(
+    modifier: Modifier = Modifier,
+    tint: Color = MaterialTheme.colorScheme.primary,
+    capsuleColor: Color? = null
+) {
+    Canvas(modifier = modifier.size(24.dp)) {
+        val w = size.width
+        val h = size.height
+        val pillLength = w * 0.72f
+        val pillThickness = h * 0.38f
+        val cornerRadius = androidx.compose.ui.geometry.CornerRadius(pillThickness / 2f, pillThickness / 2f)
+
+        withTransform({
+            rotate(degrees = -45f, pivot = Offset(w / 2f, h / 2f))
+        }) {
+            val left = (w - pillLength) / 2f
+            val top = (h - pillThickness) / 2f
+
+            // Full capsule base / left half
+            drawRoundRect(
+                color = tint,
+                topLeft = Offset(left, top),
+                size = androidx.compose.ui.geometry.Size(pillLength, pillThickness),
+                cornerRadius = cornerRadius
+            )
+
+            // Right half of capsule
+            val secondColor = capsuleColor ?: tint.copy(alpha = 0.45f)
+            val halfWidth = pillLength / 2f
+            drawRoundRect(
+                color = secondColor,
+                topLeft = Offset(left + halfWidth, top),
+                size = androidx.compose.ui.geometry.Size(halfWidth, pillThickness),
+                cornerRadius = androidx.compose.ui.geometry.CornerRadius(0f, 0f)
+            )
+            
+            // Re-apply rounded right tip
+            drawRoundRect(
+                color = secondColor,
+                topLeft = Offset(left + halfWidth - pillThickness / 2f, top),
+                size = androidx.compose.ui.geometry.Size(halfWidth + pillThickness / 2f, pillThickness),
+                cornerRadius = cornerRadius
+            )
+
+            // Center dividing line
+            drawLine(
+                color = Color.White.copy(alpha = 0.85f),
+                start = Offset(left + halfWidth, top + 1f),
+                end = Offset(left + halfWidth, top + pillThickness - 1f),
+                strokeWidth = 1.8.dp.toPx()
+            )
+        }
+    }
+}
+
+// -------------------------------------------------------------
 // AI CHAT SCREEN (FULL PAGE)
 // -------------------------------------------------------------
 
@@ -323,6 +383,7 @@ fun HomeSosScreen(
                             NorraEmotion.PEUR -> "La panique est là... Ancrons-nous ensemble."
                             NorraEmotion.HONTE -> "Pas de culpabilité ici. Tu es parfait(e) tel(le) quel(le)."
                             NorraEmotion.IDK -> "C'est normal de ne pas savoir. Accueillons ce flou."
+                            NorraEmotion.FATIGUE -> "Tu as l'air fatigué(e)... Repose-toi, ton corps et ton esprit méritent ce calme."
                             NorraEmotion.AUTRE -> "Curieuse de te lire. Raconte-moi !"
                         },
                         style = MaterialTheme.typography.bodyMedium,
@@ -418,10 +479,11 @@ fun HomeSosScreen(
                     },
                     modifier = Modifier
                         .scale(pulseScale)
-                        .size(110.dp)
-                        .shadow(12.dp, CircleShape)
+                        .width(150.dp)
+                        .height(80.dp)
+                        .shadow(12.dp, RoundedCornerShape(40.dp))
                         .testTag("sos_button"),
-                    shape = CircleShape,
+                    shape = RoundedCornerShape(40.dp),
                     border = BorderStroke(3.dp, Color.White),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = MaterialTheme.colorScheme.errorContainer,
@@ -532,6 +594,7 @@ fun HomeSosScreen(
             NorraEmotion.HONTE -> "Honte"
             NorraEmotion.IDK -> "Flou"
             NorraEmotion.DEFAULT -> "Neutre"
+            NorraEmotion.FATIGUE -> "Fatigué"
             NorraEmotion.AUTRE -> "Autre"
         }
         AlertDialog(
@@ -595,8 +658,9 @@ fun HomeSosScreen(
     if (showAllEmotionsDialog) {
         val allEmoGroups = listOf(
             listOf(NorraEmotion.JOIE, NorraEmotion.SEREIN, NorraEmotion.MOTIVE, NorraEmotion.FIER),
-            listOf(NorraEmotion.DEFAULT, NorraEmotion.COLERE, NorraEmotion.TRISTE, NorraEmotion.VIDE),
-            listOf(NorraEmotion.SEUL, NorraEmotion.PEUR, NorraEmotion.HONTE, NorraEmotion.IDK)
+            listOf(NorraEmotion.DEFAULT, NorraEmotion.FATIGUE, NorraEmotion.COLERE, NorraEmotion.TRISTE),
+            listOf(NorraEmotion.VIDE, NorraEmotion.SEUL, NorraEmotion.PEUR, NorraEmotion.HONTE),
+            listOf(NorraEmotion.IDK, NorraEmotion.AUTRE)
         )
         AlertDialog(
             onDismissRequest = { showAllEmotionsDialog = false },
@@ -1064,6 +1128,7 @@ fun MoodColorChart(
         "peur" to Color(0xFF0F7C2D),
         "honte" to Color(0xFF605F70),
         "idk" to Color(0xFFFFF59D),
+        "fatigue" to Color(0xFF9EA9EB),
         "autre" to Color(0xFF95A4FA),
         "calme" to Color(0xFF75CBAD),
         "anxiété" to Color(0xFF0F7C2D),
@@ -1085,6 +1150,7 @@ fun MoodColorChart(
         "peur" to "Panique / Peur",
         "honte" to "Honte",
         "idk" to "Flou / IDK",
+        "fatigue" to "Fatigué",
         "autre" to "Autre",
         "calme" to "Serein",
         "anxiété" to "Panique / Peur",
@@ -1478,32 +1544,17 @@ fun SuiviScreen(
     var selectedSuiviTab by remember { mutableIntStateOf(0) }
 
     Column(modifier = modifier.fillMaxSize()) {
-        TabRow(
-            selectedTabIndex = selectedSuiviTab,
-            containerColor = Color.Transparent,
-            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-            divider = {}
-        ) {
-            Tab(selected = selectedSuiviTab == 0, onClick = { selectedSuiviTab = 0 }) {
-                Text("Humeur", modifier = Modifier.padding(vertical = 12.dp), fontSize = 13.sp)
-            }
-            Tab(selected = selectedSuiviTab == 1, onClick = { selectedSuiviTab = 1 }) {
-                Text("Traitements", modifier = Modifier.padding(vertical = 12.dp), fontSize = 13.sp)
-            }
-            Tab(selected = selectedSuiviTab == 2, onClick = { selectedSuiviTab = 2 }) {
-                Text("Crises", modifier = Modifier.padding(vertical = 12.dp), fontSize = 13.sp)
-            }
-        }
-
-        if (selectedSuiviTab == 0) {
-            Box(modifier = Modifier.weight(1f).fillMaxWidth()) {
-                LazyColumn(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(horizontal = 16.dp),
-                    contentPadding = PaddingValues(top = 16.dp, bottom = 88.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
+        Box(modifier = Modifier.weight(1f).fillMaxWidth()) {
+            when (selectedSuiviTab) {
+                0 -> {
+                    Box(modifier = Modifier.fillMaxSize()) {
+                        LazyColumn(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(horizontal = 16.dp),
+                            contentPadding = PaddingValues(top = 16.dp, bottom = 16.dp),
+                            verticalArrangement = Arrangement.spacedBy(16.dp)
+                        ) {
             // Tracker Section
             item {
                 Card(
@@ -1589,7 +1640,7 @@ fun SuiviScreen(
                                 .padding(vertical = 4.dp),
                             horizontalArrangement = Arrangement.SpaceAround
                         ) {
-                            val row4 = listOf(NorraEmotion.DEFAULT)
+                            val row4 = listOf(NorraEmotion.DEFAULT, NorraEmotion.FATIGUE)
                             row4.forEach { emo ->
                                 EmotionBubble(
                                     emotion = emo,
@@ -1846,6 +1897,79 @@ fun SuiviScreen(
             Text("Écrire Journal ✍", fontSize = 13.sp, fontWeight = FontWeight.Bold)
         }
     }
+}
+                1 -> {
+                    MedicationTrackerScreen(viewModel = viewModel, modifier = Modifier.fillMaxSize())
+                }
+                2 -> {
+                    CrisisHistoryScreen(viewModel = viewModel, modifier = Modifier.fillMaxSize())
+                }
+            }
+        }
+
+        // Bottom sub-navigation bar for Suivi (Icons only)
+        Surface(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 24.dp, vertical = 6.dp),
+            shape = RoundedCornerShape(24.dp),
+            color = MaterialTheme.colorScheme.surfaceVariant,
+            tonalElevation = 3.dp,
+            shadowElevation = 4.dp
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 4.dp),
+                horizontalArrangement = Arrangement.SpaceAround,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                IconButton(
+                    onClick = { selectedSuiviTab = 0 },
+                    modifier = Modifier
+                        .size(44.dp)
+                        .background(
+                            if (selectedSuiviTab == 0) MaterialTheme.colorScheme.primaryContainer else Color.Transparent,
+                            CircleShape
+                        )
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Favorite,
+                        contentDescription = "Humeur",
+                        tint = if (selectedSuiviTab == 0) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+                IconButton(
+                    onClick = { selectedSuiviTab = 1 },
+                    modifier = Modifier
+                        .size(44.dp)
+                        .background(
+                            if (selectedSuiviTab == 1) MaterialTheme.colorScheme.primaryContainer else Color.Transparent,
+                            CircleShape
+                        )
+                ) {
+                    PillIcon(
+                        tint = if (selectedSuiviTab == 1) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+                IconButton(
+                    onClick = { selectedSuiviTab = 2 },
+                    modifier = Modifier
+                        .size(44.dp)
+                        .background(
+                            if (selectedSuiviTab == 2) MaterialTheme.colorScheme.primaryContainer else Color.Transparent,
+                            CircleShape
+                        )
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Warning,
+                        contentDescription = "Crises",
+                        tint = if (selectedSuiviTab == 2) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+        }
+    }
 
     if (showJournalDialog) {
         AlertDialog(
@@ -1928,7 +2052,7 @@ fun SuiviScreen(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceAround
                         ) {
-                            val r4 = listOf(NorraEmotion.DEFAULT)
+                            val r4 = listOf(NorraEmotion.DEFAULT, NorraEmotion.FATIGUE)
                             r4.forEach { emo ->
                                 EmotionBubble(
                                     emotion = emo,
@@ -2021,12 +2145,6 @@ fun SuiviScreen(
             }
         )
     }
-        } else if (selectedSuiviTab == 1) {
-            MedicationTrackerScreen(viewModel = viewModel, modifier = Modifier.fillMaxSize())
-        } else {
-            CrisisHistoryScreen(viewModel = viewModel, modifier = Modifier.fillMaxSize())
-        }
-    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -2035,6 +2153,8 @@ fun MedicationTrackerScreen(viewModel: NorraViewModel, modifier: Modifier = Modi
     val medications by viewModel.medications.collectAsState()
     var showAddDialog by remember { mutableStateOf(false) }
     var editingMedication by remember { mutableStateOf<com.example.data.Medication?>(null) }
+    var infoMedication by remember { mutableStateOf<com.example.data.Medication?>(null) }
+    var isReminderHeaderExpanded by remember { mutableStateOf(false) }
     val context = androidx.compose.ui.platform.LocalContext.current
     
     val permissionLauncher = androidx.activity.compose.rememberLauncherForActivityResult(
@@ -2047,14 +2167,32 @@ fun MedicationTrackerScreen(viewModel: NorraViewModel, modifier: Modifier = Modi
         }
     }
     
-    val todayFormatter = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.getDefault())
-    val selectedDateString by remember { mutableStateOf(todayFormatter.format(java.util.Date())) }
+    val todayCalendar = remember { java.util.Calendar.getInstance() }
+    val currentHour = remember { todayCalendar.get(java.util.Calendar.HOUR_OF_DAY) }
+    val isLateNightWindow = currentHour < 6 // 00:00 to 05:59 only
+
+    val todayFormatter = remember { java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.getDefault()) }
+    val todayDateString = remember { todayFormatter.format(todayCalendar.time) }
+    val yesterdayDateString = remember {
+        val yCal = java.util.Calendar.getInstance().apply { add(java.util.Calendar.DAY_OF_YEAR, -1) }
+        todayFormatter.format(yCal.time)
+    }
+
+    // Only allow viewing/editing yesterday during the night window (00:00 - 05:59)
+    // Defaults directly to today
+    var isViewingYesterday by remember { mutableStateOf(false) }
+    var isNightBannerDismissed by remember { mutableStateOf(false) }
+    val selectedDateString = if (isLateNightWindow && isViewingYesterday) yesterdayDateString else todayDateString
+
     val logs by viewModel.getMedicationLogsByDate(selectedDateString).collectAsState(initial = emptyList())
     val allLogs by viewModel.allMedicationLogs.collectAsState()
     val globalReminderEnabled by viewModel.globalReminderEnabled.collectAsState()
     val globalReminderTime by viewModel.globalReminderTime.collectAsState()
     
     var medName by remember { mutableStateOf("") }
+    var medMolecule by remember { mutableStateOf("") }
+    var medMealTiming by remember { mutableStateOf("indifferent") }
+    var medPosologyNotes by remember { mutableStateOf("") }
     var medDosage by remember { mutableStateOf("10") }
     var medCount by remember { mutableStateOf("1") }
     var medTime by remember { mutableStateOf("08:00") }
@@ -2092,106 +2230,128 @@ fun MedicationTrackerScreen(viewModel: NorraViewModel, modifier: Modifier = Modi
     Box(modifier = modifier.fillMaxSize()) {
         LazyColumn(
             modifier = Modifier.fillMaxSize().padding(horizontal = 16.dp),
-            contentPadding = PaddingValues(bottom = 88.dp),
+            contentPadding = PaddingValues(top = 16.dp, bottom = 88.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
+        // Collapsible Header Card
         item {
             Card(
-                modifier = Modifier.fillMaxWidth().shadow(6.dp, RoundedCornerShape(24.dp)),
-                shape = RoundedCornerShape(24.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .shadow(4.dp, RoundedCornerShape(20.dp)),
+                shape = RoundedCornerShape(20.dp),
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
             ) {
-                Column(modifier = Modifier.padding(20.dp)) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Box(
-                            modifier = Modifier.size(40.dp).background(MaterialTheme.colorScheme.primary, CircleShape),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(imageVector = Icons.Default.AddCircle, contentDescription = null, tint = MaterialTheme.colorScheme.onPrimary)
-                        }
-                        Spacer(modifier = Modifier.width(12.dp))
-                        Text(
-                            text = "Mes Traitements",
-                            fontSize = 20.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.primary
-                        )
-                    }
-                    Spacer(modifier = Modifier.height(12.dp))
-                    Text(
-                        text = "Ajoute tes médicaments. Les rappels t'aideront à ne pas les oublier.",
-                        fontSize = 13.sp,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f)
-                    )
-                    Spacer(modifier = Modifier.height(16.dp))
-                    
+                Column(modifier = Modifier.padding(16.dp)) {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
-                        Column {
-                            Text("Rappel global", fontWeight = FontWeight.SemiBold)
-                            Text("Un seul rappel pour tout (ou désactiver)", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier
+                                .weight(1f)
+                                .clickable { isReminderHeaderExpanded = !isReminderHeaderExpanded }
+                        ) {
+                            Box(
+                                modifier = Modifier.size(38.dp).background(MaterialTheme.colorScheme.primary, CircleShape),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                PillIcon(
+                                    tint = MaterialTheme.colorScheme.onPrimary,
+                                    capsuleColor = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.6f)
+                                )
+                            }
+                            Spacer(modifier = Modifier.width(12.dp))
+                            Column {
+                                Text(
+                                    text = "Mes Traitements",
+                                    fontSize = 18.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.primary
+                                )
+                                val reminderSummary = if (globalReminderEnabled) "🔔 Rappel global : $globalReminderTime" else "🔕 Rappels désactivés"
+                                Text(
+                                    text = reminderSummary,
+                                    fontSize = 12.sp,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f)
+                                )
+                            }
                         }
-                        androidx.compose.material3.Switch(
-                            checked = globalReminderEnabled,
-                            onCheckedChange = { checked ->
-                                viewModel.setGlobalReminderEnabled(checked)
-                                com.example.util.NotificationHelper.scheduleGlobalAlarm(context, globalReminderTime, checked)
-                                medications.forEach { med ->
-                                    if (checked && med.reminderEnabled) {
-                                        com.example.util.NotificationHelper.scheduleMedicationAlarm(
-                                            context, med.id, med.name, med.dosageMg, med.pillCount, med.timeToTake, true, med.intakes
-                                        )
-                                    } else {
-                                        com.example.util.NotificationHelper.cancelMedicationAlarm(context, med.id)
+                        IconButton(onClick = { isReminderHeaderExpanded = !isReminderHeaderExpanded }) {
+                            Icon(
+                                imageVector = if (isReminderHeaderExpanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
+                                contentDescription = if (isReminderHeaderExpanded) "Réduire" else "Déplier",
+                                tint = MaterialTheme.colorScheme.primary
+                            )
+                        }
+                    }
+
+                    if (isReminderHeaderExpanded) {
+                        Column(modifier = Modifier.padding(top = 10.dp)) {
+                            HorizontalDivider(
+                                modifier = Modifier.padding(vertical = 8.dp),
+                                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.2f),
+                                thickness = 1.dp
+                            )
+                            Text(
+                                text = "Gère tes médicaments et configure les rappels d'alertes journaliers.",
+                                fontSize = 12.sp,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.85f)
+                            )
+                            Spacer(modifier = Modifier.height(10.dp))
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Column {
+                                    Text("Rappel global", fontWeight = FontWeight.SemiBold, fontSize = 14.sp)
+                                    Text("Activer / désactiver les alertes", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                }
+                                androidx.compose.material3.Switch(
+                                    checked = globalReminderEnabled,
+                                    onCheckedChange = { checked ->
+                                        viewModel.setGlobalReminderEnabled(checked)
+                                        com.example.util.NotificationHelper.scheduleGlobalAlarm(context, globalReminderTime, checked)
+                                        medications.forEach { med ->
+                                            if (checked && med.reminderEnabled) {
+                                                com.example.util.NotificationHelper.scheduleMedicationAlarm(
+                                                    context, med.id, med.name, med.dosageMg, med.pillCount, med.timeToTake, true, med.intakes
+                                                )
+                                            } else {
+                                                com.example.util.NotificationHelper.cancelMedicationAlarm(context, med.id)
+                                            }
+                                        }
+                                    }
+                                )
+                            }
+                            
+                            if (globalReminderEnabled) {
+                                Spacer(modifier = Modifier.height(8.dp))
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.SpaceBetween
+                                ) {
+                                    Text("Heure du rappel :", fontSize = 13.sp)
+                                    OutlinedButton(onClick = {
+                                        val tp = globalReminderTime.split(":")
+                                        val h = tp.getOrNull(0)?.toIntOrNull() ?: 8
+                                        val m = tp.getOrNull(1)?.toIntOrNull() ?: 0
+                                        android.app.TimePickerDialog(context, { _, ch, cm ->
+                                            val newT = String.format(java.util.Locale.getDefault(), "%02d:%02d", ch, cm)
+                                            viewModel.setGlobalReminderTime(newT)
+                                            com.example.util.NotificationHelper.scheduleGlobalAlarm(context, newT, true)
+                                            android.widget.Toast.makeText(context, "Rappel global réglé sur $newT", android.widget.Toast.LENGTH_SHORT).show()
+                                        }, h, m, true).show()
+                                    }) {
+                                        Text(globalReminderTime, fontWeight = FontWeight.Bold)
                                     }
                                 }
                             }
-                        )
-                    }
-                    
-                    if (globalReminderEnabled) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            Text("Heure du rappel global :", fontSize = 14.sp)
-                            OutlinedButton(onClick = {
-                                val tp = globalReminderTime.split(":")
-                                val h = tp.getOrNull(0)?.toIntOrNull() ?: 8
-                                val m = tp.getOrNull(1)?.toIntOrNull() ?: 0
-                                android.app.TimePickerDialog(context, { _, ch, cm ->
-                                    val newT = String.format(java.util.Locale.getDefault(), "%02d:%02d", ch, cm)
-                                    viewModel.setGlobalReminderTime(newT)
-                                    com.example.util.NotificationHelper.scheduleGlobalAlarm(context, newT, true)
-                                    android.widget.Toast.makeText(context, "Rappel global réglé sur $newT", android.widget.Toast.LENGTH_SHORT).show()
-                                }, h, m, true).show()
-                            }) {
-                                Text(globalReminderTime, fontWeight = FontWeight.Bold)
-                            }
                         }
-                    }
-
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    Button(
-                        onClick = { 
-                            editingMedication = null
-                            medName = ""
-                            medDosage = "10"
-                            medCount = "1"
-                            medTime = "08:00"
-                            medIntakes = ""
-                            medReminderEnabled = true
-                            showAddDialog = true 
-                        },
-                        modifier = Modifier.fillMaxWidth().height(48.dp),
-                        shape = RoundedCornerShape(12.dp)
-                    ) {
-                        Text("Ajouter un traitement")
                     }
                 }
             }
@@ -2212,13 +2372,86 @@ fun MedicationTrackerScreen(viewModel: NorraViewModel, modifier: Modifier = Modi
         }
 
         item {
-            Text(
-                text = "Suivi d'aujourd'hui",
-                fontSize = 18.sp,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurface,
-                modifier = Modifier.padding(top = 8.dp)
-            )
+            Column(modifier = Modifier.fillMaxWidth().padding(top = 4.dp)) {
+                if (isLateNightWindow) {
+                    if (!isNightBannerDismissed) {
+                        Card(
+                            modifier = Modifier.fillMaxWidth().padding(bottom = 10.dp),
+                            colors = CardDefaults.cardColors(
+                                containerColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.7f)
+                            ),
+                            shape = RoundedCornerShape(14.dp)
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(start = 12.dp, top = 8.dp, end = 6.dp, bottom = 8.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Info,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.secondary,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                                Spacer(modifier = Modifier.width(10.dp))
+                                Text(
+                                    text = "🌙 Fenêtre nocturne active (00h-06h) : Tu peux cocher tes prises de la veille. Passé 06h00, la journée est verrouillée.",
+                                    fontSize = 12.sp,
+                                    color = MaterialTheme.colorScheme.onSecondaryContainer,
+                                    fontWeight = FontWeight.Medium,
+                                    modifier = Modifier.weight(1f)
+                                )
+                                IconButton(
+                                    onClick = { isNightBannerDismissed = true },
+                                    modifier = Modifier.size(28.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Close,
+                                        contentDescription = "Fermer l'info",
+                                        tint = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.7f),
+                                        modifier = Modifier.size(16.dp)
+                                    )
+                                }
+                            }
+                        }
+                    }
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        FilterChip(
+                            selected = isViewingYesterday,
+                            onClick = { isViewingYesterday = true },
+                            label = { Text("Hier (la veille)") },
+                            leadingIcon = {
+                                if (isViewingYesterday) {
+                                    Icon(Icons.Default.Check, contentDescription = null, modifier = Modifier.size(16.dp))
+                                }
+                            }
+                        )
+                        FilterChip(
+                            selected = !isViewingYesterday,
+                            onClick = { isViewingYesterday = false },
+                            label = { Text("Aujourd'hui") },
+                            leadingIcon = {
+                                if (!isViewingYesterday) {
+                                    Icon(Icons.Default.Check, contentDescription = null, modifier = Modifier.size(16.dp))
+                                }
+                            }
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(10.dp))
+                }
+
+                Text(
+                    text = if (isLateNightWindow && isViewingYesterday) "Suivi d'hier (la veille)" else "Suivi d'aujourd'hui",
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+            }
         }
         
         items(medications) { med ->
@@ -2239,7 +2472,7 @@ fun MedicationTrackerScreen(viewModel: NorraViewModel, modifier: Modifier = Modi
                 shape = RoundedCornerShape(16.dp)
             ) {
                 Row(
-                    modifier = Modifier.padding(16.dp).fillMaxWidth(),
+                    modifier = Modifier.padding(14.dp).fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Column(modifier = Modifier.weight(1f)) {
@@ -2261,6 +2494,15 @@ fun MedicationTrackerScreen(viewModel: NorraViewModel, modifier: Modifier = Modi
                                 Text(" off", fontSize = 10.sp, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f))
                             }
                         }
+
+                        if (med.molecule.isNotBlank()) {
+                            Text(
+                                text = med.molecule,
+                                fontSize = 12.sp,
+                                fontStyle = FontStyle.Italic,
+                                color = if (isAllTaken) MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f) else MaterialTheme.colorScheme.primary
+                            )
+                        }
                         
                         val displayIntakes = if (med.intakes.isNotBlank()) {
                             med.intakes.split(";").mapNotNull {
@@ -2271,18 +2513,36 @@ fun MedicationTrackerScreen(viewModel: NorraViewModel, modifier: Modifier = Modi
                             "${med.timeToTake} (${med.pillCount}x)"
                         }
 
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Text(
-                            text = "${med.dosageMg}mg par cachet",
-                            fontSize = 13.sp,
-                            color = if (isAllTaken) MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f) else MaterialTheme.colorScheme.onSurfaceVariant
-                        )
+                        Spacer(modifier = Modifier.height(2.dp))
+                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                            Text(
+                                text = "${med.dosageMg}mg",
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = if (isAllTaken) MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f) else MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            
+                            val mealBadgeText = when (med.mealTiming) {
+                                "before" -> "🥐 Avant repas"
+                                "during" -> "🍲 Pendant repas"
+                                "after" -> "☕ Après repas"
+                                else -> null
+                            }
+                            if (mealBadgeText != null) {
+                                Text(
+                                    text = "• $mealBadgeText",
+                                    fontSize = 11.sp,
+                                    color = if (isAllTaken) MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f) else MaterialTheme.colorScheme.secondary
+                                )
+                            }
+                        }
+
                         Spacer(modifier = Modifier.height(2.dp))
                         Text(
                             text = "Prises : $displayIntakes",
-                            fontSize = 13.sp,
+                            fontSize = 12.sp,
                             fontWeight = FontWeight.Medium,
-                            color = MaterialTheme.colorScheme.primary
+                            color = if (isAllTaken) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.primary
                         )
                     }
                     
@@ -2299,6 +2559,14 @@ fun MedicationTrackerScreen(viewModel: NorraViewModel, modifier: Modifier = Modi
                     }
                     
                     Column {
+                        IconButton(onClick = { infoMedication = med }, modifier = Modifier.size(34.dp)) {
+                            Icon(
+                                imageVector = Icons.Default.Info,
+                                contentDescription = "Infos & Posologie",
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
                         IconButton(onClick = {
                             val newValue = !med.reminderEnabled
                             viewModel.updateMedication(
@@ -2309,6 +2577,9 @@ fun MedicationTrackerScreen(viewModel: NorraViewModel, modifier: Modifier = Modi
                                 timeToTake = med.timeToTake, 
                                 reminderEnabled = newValue, 
                                 intakes = med.intakes,
+                                molecule = med.molecule,
+                                mealTiming = med.mealTiming,
+                                posologyNotes = med.posologyNotes,
                                 onUpdated = {}
                             )
                             if (newValue && globalReminderEnabled) {
@@ -2318,9 +2589,14 @@ fun MedicationTrackerScreen(viewModel: NorraViewModel, modifier: Modifier = Modi
                             } else {
                                 com.example.util.NotificationHelper.cancelMedicationAlarm(context, med.id)
                             }
-                        }) {
+                        }, modifier = Modifier.size(34.dp)) {
                             val iconAlpha = if (med.reminderEnabled) 1.0f else 0.4f
-                            Icon(imageVector = Icons.Default.Notifications, contentDescription = "Toggle Rappel", tint = MaterialTheme.colorScheme.primary.copy(alpha=iconAlpha))
+                            Icon(
+                                imageVector = Icons.Default.Notifications,
+                                contentDescription = "Toggle Rappel",
+                                tint = MaterialTheme.colorScheme.primary.copy(alpha=iconAlpha),
+                                modifier = Modifier.size(20.dp)
+                            )
                         }
                         IconButton(onClick = {
                             editingMedication = med
@@ -2330,15 +2606,28 @@ fun MedicationTrackerScreen(viewModel: NorraViewModel, modifier: Modifier = Modi
                             medTime = med.timeToTake
                             medReminderEnabled = med.reminderEnabled
                             medIntakes = med.intakes
+                            medMolecule = med.molecule
+                            medMealTiming = if (med.mealTiming.isNotBlank()) med.mealTiming else "indifferent"
+                            medPosologyNotes = med.posologyNotes
                             showAddDialog = true
-                        }) {
-                            Icon(imageVector = Icons.Default.Edit, contentDescription = "Éditer", tint = MaterialTheme.colorScheme.primary)
+                        }, modifier = Modifier.size(34.dp)) {
+                            Icon(
+                                imageVector = Icons.Default.Edit,
+                                contentDescription = "Éditer",
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.size(20.dp)
+                            )
                         }
                         IconButton(onClick = { 
                             viewModel.deleteMedication(med.id)
                             com.example.util.NotificationHelper.cancelMedicationAlarm(context, med.id)
-                        }) {
-                            Icon(imageVector = Icons.Default.Delete, contentDescription = "Supprimer", tint = MaterialTheme.colorScheme.error)
+                        }, modifier = Modifier.size(34.dp)) {
+                            Icon(
+                                imageVector = Icons.Default.Delete,
+                                contentDescription = "Supprimer",
+                                tint = MaterialTheme.colorScheme.error,
+                                modifier = Modifier.size(20.dp)
+                            )
                         }
                     }
                 }
@@ -2346,6 +2635,166 @@ fun MedicationTrackerScreen(viewModel: NorraViewModel, modifier: Modifier = Modi
         }
     }
     
+    // Bottom-Right Floating Button to Add a Medication
+    ExtendedFloatingActionButton(
+        onClick = { 
+            editingMedication = null
+            medName = ""
+            medDosage = "10"
+            medCount = "1"
+            medTime = "08:00"
+            medIntakes = ""
+            medReminderEnabled = true
+            medMolecule = ""
+            medMealTiming = "indifferent"
+            medPosologyNotes = ""
+            showAddDialog = true 
+        },
+        modifier = Modifier
+            .align(Alignment.BottomEnd)
+            .padding(end = 16.dp, bottom = 18.dp)
+            .testTag("floating_add_medication_button"),
+        containerColor = MaterialTheme.colorScheme.primaryContainer,
+        contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+        shape = RoundedCornerShape(20.dp)
+    ) {
+        Icon(imageVector = Icons.Default.Add, contentDescription = "Ajouter")
+        Spacer(modifier = Modifier.width(6.dp))
+        Text("Ajouter 💊", fontSize = 13.sp, fontWeight = FontWeight.Bold)
+    }
+
+    // Info & Posology Dialog (i)
+    if (infoMedication != null) {
+        val currentInfo = infoMedication!!
+        AlertDialog(
+            onDismissRequest = { infoMedication = null },
+            icon = {
+                Box(
+                    modifier = Modifier.size(44.dp).background(MaterialTheme.colorScheme.primaryContainer, CircleShape),
+                    contentAlignment = Alignment.Center
+                ) {
+                    PillIcon(tint = MaterialTheme.colorScheme.primary)
+                }
+            },
+            title = {
+                Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
+                    Text(
+                        text = currentInfo.name,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 20.sp,
+                        textAlign = TextAlign.Center
+                    )
+                    if (currentInfo.molecule.isNotBlank()) {
+                        Spacer(modifier = Modifier.height(2.dp))
+                        Text(
+                            text = "Molécule : ${currentInfo.molecule}",
+                            fontSize = 13.sp,
+                            fontStyle = FontStyle.Italic,
+                            color = MaterialTheme.colorScheme.primary,
+                            textAlign = TextAlign.Center
+                        )
+                    }
+                }
+            },
+            text = {
+                Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Card(
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f)),
+                        shape = RoundedCornerShape(12.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Text("🍽 Prise au repas : ", fontWeight = FontWeight.SemiBold, fontSize = 13.sp)
+                                val mealText = when(currentInfo.mealTiming) {
+                                    "before" -> "Avant le repas 🥐"
+                                    "during" -> "Pendant le repas 🍲"
+                                    "after" -> "Après le repas ☕"
+                                    else -> "Indifférent / Sans importance 🍽"
+                                }
+                                Text(mealText, fontSize = 13.sp, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Medium)
+                            }
+
+                            val displayIntakes = if (currentInfo.intakes.isNotBlank()) {
+                                currentInfo.intakes.split(";").mapNotNull {
+                                    val p = it.split(",")
+                                    if (p.size == 2) "${p[0]} (${p[1]}x)" else null
+                                }.joinToString(", ")
+                            } else {
+                                "${currentInfo.timeToTake} (${currentInfo.pillCount}x)"
+                            }
+                            Text("⏰ Prises journalières : $displayIntakes (${currentInfo.dosageMg}mg)", fontSize = 13.sp)
+                        }
+                    }
+
+                    if (currentInfo.posologyNotes.isNotBlank()) {
+                        Card(
+                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.4f)),
+                            shape = RoundedCornerShape(12.dp),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Column(modifier = Modifier.padding(12.dp)) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Icon(
+                                        imageVector = Icons.Default.Info,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(16.dp),
+                                        tint = MaterialTheme.colorScheme.primary
+                                    )
+                                    Spacer(modifier = Modifier.width(6.dp))
+                                    Text(
+                                        text = "Posologie & Consignes :",
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 13.sp,
+                                        color = MaterialTheme.colorScheme.primary
+                                    )
+                                }
+                                Spacer(modifier = Modifier.height(6.dp))
+                                Text(
+                                    text = currentInfo.posologyNotes,
+                                    fontSize = 13.sp,
+                                    color = MaterialTheme.colorScheme.onSurface
+                                )
+                            }
+                        }
+                    } else {
+                        Text(
+                            text = "Aucune consigne de posologie supplémentaire enregistrée.",
+                            fontSize = 12.sp,
+                            fontStyle = FontStyle.Italic,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+            },
+            confirmButton = {
+                Button(onClick = { infoMedication = null }) {
+                    Text("Compris")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = {
+                    val medToEdit = currentInfo
+                    infoMedication = null
+                    editingMedication = medToEdit
+                    medName = medToEdit.name
+                    medDosage = medToEdit.dosageMg.toString()
+                    medCount = medToEdit.pillCount.toString()
+                    medTime = medToEdit.timeToTake
+                    medReminderEnabled = medToEdit.reminderEnabled
+                    medIntakes = medToEdit.intakes
+                    medMolecule = medToEdit.molecule
+                    medMealTiming = if (medToEdit.mealTiming.isNotBlank()) medToEdit.mealTiming else "indifferent"
+                    medPosologyNotes = medToEdit.posologyNotes
+                    showAddDialog = true
+                }) {
+                    Text("Modifier")
+                }
+            }
+        )
+    }
+    
+    // Add / Edit Medication Dialog
     if (showAddDialog) {
         val titleText = if (editingMedication != null) "Modifier le traitement" else "Ajouter un traitement"
         val submitText = if (editingMedication != null) "Mettre à jour" else "Ajouter"
@@ -2365,13 +2814,18 @@ fun MedicationTrackerScreen(viewModel: NorraViewModel, modifier: Modifier = Modi
             onDismissRequest = { showAddDialog = false },
             title = { Text(titleText, fontWeight = FontWeight.Bold) },
             text = {
-                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .verticalScroll(rememberScrollState()),
+                    verticalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
-                        Text("Activer le rappel pour ce médoc", fontSize = 14.sp)
+                        Text("Activer le rappel pour ce médoc", fontSize = 13.sp)
                         androidx.compose.material3.Switch(
                             checked = medReminderEnabled,
                             onCheckedChange = { medReminderEnabled = it }
@@ -2381,29 +2835,88 @@ fun MedicationTrackerScreen(viewModel: NorraViewModel, modifier: Modifier = Modi
                     OutlinedTextField(
                         value = medName,
                         onValueChange = { medName = it },
-                        label = { Text("Nom du médicament") },
-                        modifier = Modifier.fillMaxWidth()
+                        label = { Text("Nom du médicament * (obligatoire)") },
+                        placeholder = { Text("ex: Xanax, Doliprane, Zoloft...") },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true
                     )
-                    Text("Dosage standard :", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        listOf("10", "20", "30", "50", "100").forEach { quickDose ->
+
+                    OutlinedTextField(
+                        value = medMolecule,
+                        onValueChange = { medMolecule = it },
+                        label = { Text("Nom de la molécule (optionnel)") },
+                        placeholder = { Text("ex: Alprazolam, Paracétamol, Sertraline...") },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true
+                    )
+
+                    Column {
+                        Text("Moment de prise par rapport au repas :", fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(4.dp)
+                        ) {
                             FilterChip(
-                                selected = medDosage == quickDose,
-                                onClick = { medDosage = quickDose },
-                                label = { Text("${quickDose}mg") }
+                                selected = medMealTiming == "indifferent",
+                                onClick = { medMealTiming = "indifferent" },
+                                label = { Text("🍽 Indifférent", fontSize = 11.sp) }
+                            )
+                            FilterChip(
+                                selected = medMealTiming == "before",
+                                onClick = { medMealTiming = "before" },
+                                label = { Text("🥐 Avant", fontSize = 11.sp) }
+                            )
+                        }
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(4.dp)
+                        ) {
+                            FilterChip(
+                                selected = medMealTiming == "during",
+                                onClick = { medMealTiming = "during" },
+                                label = { Text("🍲 Pendant", fontSize = 11.sp) }
+                            )
+                            FilterChip(
+                                selected = medMealTiming == "after",
+                                onClick = { medMealTiming = "after" },
+                                label = { Text("☕ Après", fontSize = 11.sp) }
                             )
                         }
                     }
+
                     OutlinedTextField(
-                        value = medDosage,
-                        onValueChange = { medDosage = it },
-                        label = { Text("Ou dosage libre (mg)") },
-                        modifier = Modifier.fillMaxWidth(),
-                        keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = androidx.compose.ui.text.input.KeyboardType.Number)
+                        value = medPosologyNotes,
+                        onValueChange = { medPosologyNotes = it },
+                        label = { Text("Posologie & Infos en plus (optionnel)") },
+                        placeholder = { Text("ex: 1 comprimé le matin avec un grand verre d'eau, max 3 par jour, ne pas écraser...") },
+                        modifier = Modifier.fillMaxWidth().heightIn(min = 70.dp),
+                        maxLines = 4
                     )
 
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text("Prises journalières :", fontWeight = FontWeight.SemiBold)
+                    Column {
+                        Text("Dosage par comprimé (mg) :", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                            listOf("10", "20", "30", "50", "100").forEach { quickDose ->
+                                FilterChip(
+                                    selected = medDosage == quickDose,
+                                    onClick = { medDosage = quickDose },
+                                    label = { Text("${quickDose}mg", fontSize = 11.sp) }
+                                )
+                            }
+                        }
+                        OutlinedTextField(
+                            value = medDosage,
+                            onValueChange = { medDosage = it },
+                            label = { Text("Ou dosage personnalisé (mg)") },
+                            modifier = Modifier.fillMaxWidth(),
+                            keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = androidx.compose.ui.text.input.KeyboardType.Number),
+                            singleLine = true
+                        )
+                    }
+
+                    Text("Prises journalières :", fontWeight = FontWeight.SemiBold, fontSize = 13.sp)
                     
                     intakesList.forEachIndexed { index, intake ->
                         Row(
@@ -2421,7 +2934,7 @@ fun MedicationTrackerScreen(viewModel: NorraViewModel, modifier: Modifier = Modi
                                         { _, h, m ->
                                             val newTime = String.format(java.util.Locale.getDefault(), "%02d:%02d", h, m)
                                             val newList = intakesList.toMutableList()
-                                            newList[index] = intake.copy(first = newTime)
+                                            newList[index] = Pair(newTime, intake.second)
                                             intakesList = newList
                                         },
                                         hour, minute, true
@@ -2439,11 +2952,12 @@ fun MedicationTrackerScreen(viewModel: NorraViewModel, modifier: Modifier = Modi
                                 onValueChange = { newCount ->
                                     val countInt = newCount.toIntOrNull() ?: 0
                                     val newList = intakesList.toMutableList()
-                                    newList[index] = intake.copy(second = countInt)
+                                    newList[index] = Pair(intake.first, countInt)
                                     intakesList = newList
                                 },
                                 modifier = Modifier.width(60.dp),
-                                keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = androidx.compose.ui.text.input.KeyboardType.Number)
+                                keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = androidx.compose.ui.text.input.KeyboardType.Number),
+                                singleLine = true
                             )
                             
                             if (intakesList.size > 1) {
@@ -2462,7 +2976,7 @@ fun MedicationTrackerScreen(viewModel: NorraViewModel, modifier: Modifier = Modi
                     
                     TextButton(onClick = {
                         intakesList = intakesList + Pair("08:00", 1)
-                    }, modifier = Modifier.align(Alignment.End)) {
+                    }, modifier = Modifier.fillMaxWidth()) {
                         Text("+ Ajouter une prise")
                     }
                 }
@@ -2471,7 +2985,10 @@ fun MedicationTrackerScreen(viewModel: NorraViewModel, modifier: Modifier = Modi
                 Button(onClick = {
                     if (medName.isNotBlank()) {
                         val dosageInt = medDosage.toIntOrNull() ?: 10
-                        val currentName = medName
+                        val currentName = medName.trim()
+                        val currentMolecule = medMolecule.trim()
+                        val currentTiming = medMealTiming
+                        val currentPosology = medPosologyNotes.trim()
                         
                         val newIntakesStr = intakesList.joinToString(";") { "${it.first},${it.second}" }
                         val firstIntakeCount = intakesList.firstOrNull()?.second ?: 1
@@ -2487,7 +3004,10 @@ fun MedicationTrackerScreen(viewModel: NorraViewModel, modifier: Modifier = Modi
                                 pillCount = firstIntakeCount,
                                 timeToTake = firstIntakeTime,
                                 reminderEnabled = medReminderEnabled,
-                                intakes = newIntakesStr
+                                intakes = newIntakesStr,
+                                molecule = currentMolecule,
+                                mealTiming = currentTiming,
+                                posologyNotes = currentPosology
                             ) {
                                 com.example.util.NotificationHelper.scheduleMedicationAlarm(
                                     context,
@@ -2508,7 +3028,10 @@ fun MedicationTrackerScreen(viewModel: NorraViewModel, modifier: Modifier = Modi
                                 pillCount = firstIntakeCount,
                                 timeToTake = firstIntakeTime,
                                 reminderEnabled = medReminderEnabled,
-                                intakes = newIntakesStr
+                                intakes = newIntakesStr,
+                                molecule = currentMolecule,
+                                mealTiming = currentTiming,
+                                posologyNotes = currentPosology
                             ) { medId ->
                                 com.example.util.NotificationHelper.scheduleMedicationAlarm(
                                     context,
@@ -2524,6 +3047,8 @@ fun MedicationTrackerScreen(viewModel: NorraViewModel, modifier: Modifier = Modi
                             Toast.makeText(context, "Rappel programmé.", Toast.LENGTH_SHORT).show()
                         }
                         showAddDialog = false
+                    } else {
+                        Toast.makeText(context, "Veuillez entrer le nom du médicament", Toast.LENGTH_SHORT).show()
                     }
                 }) {
                     Text(submitText)
@@ -5212,14 +5737,14 @@ fun ProfileScreen(
             isConnected = true
             userEmail = account?.email ?: "perrine@gmail.com"
             val fetchedName = account?.givenName ?: "Perrine"
-            viewModel.setLoginState(true, userEmail, fetchedName)
+            viewModel.setLoginState(true, userEmail, fetchedName, "Connecté avec Google")
             Toast.makeText(context, "Connecté avec succès !", Toast.LENGTH_SHORT).show()
         } catch (e: ApiException) {
             if (e.statusCode == 10) {
                 Toast.makeText(context, "Mode simulation (SHA-1 local) : Connecté virtuellement", Toast.LENGTH_LONG).show()
                 isConnected = true
                 userEmail = "perrine@gmail.com"
-                viewModel.setLoginState(true, "perrine@gmail.com", "Perrine")
+                viewModel.setLoginState(true, "perrine@gmail.com", "Perrine", "Connecté avec Google")
             } else {
                 Toast.makeText(context, "Erreur de connexion : ${e.statusCode}", Toast.LENGTH_SHORT).show()
                 e.printStackTrace()
@@ -5498,7 +6023,36 @@ fun ProfileScreen(
                                     data = Uri.parse("mailto:")
                                     putExtra(Intent.EXTRA_EMAIL, arrayOf("helpmenorra@gmail.com"))
                                     putExtra(Intent.EXTRA_SUBJECT, "Norra App - Rapport de Bug")
-                                    putExtra(Intent.EXTRA_TEXT, "Bonjour l'équipe Norra,\n\nVoici le bug que je souhaite vous signaler :\n\n...")
+                                    
+                                    var appVersion = "Inconnue"
+                                    try {
+                                        val pInfo = context.packageManager.getPackageInfo(context.packageName, 0)
+                                        appVersion = pInfo.versionName ?: "Inconnue"
+                                    } catch (e: Exception) {}
+                                    
+                                    val brand = android.os.Build.BRAND
+                                    val model = android.os.Build.MODEL
+                                    val osVersion = android.os.Build.VERSION.RELEASE
+                                    val apiLevel = android.os.Build.VERSION.SDK_INT
+                                    
+                                    val bodyText = """
+                                        Bonjour l'équipe Norra,
+                                        
+                                        Voici le bug que je souhaite vous signaler :
+                                        [Décrivez le bug ici, en précisant quelles actions ont eu lieu]
+                                        
+                                        
+                                        ======================
+                                        Informations de Diagnostic (ne pas modifier) :
+                                        - Marque / Appareil : $brand
+                                        - Modèle : $model
+                                        - Version Android : $osVersion (API $apiLevel)
+                                        - Version App : $appVersion
+                                        - Logs / Rapport : (Laissez vide s'il n'y a pas de log particulier. Si l'app a crashé, n'hésitez pas à joindre une capture d'écran)
+                                        ======================
+                                    """.trimIndent()
+                                    
+                                    putExtra(Intent.EXTRA_TEXT, bodyText)
                                 }
                                 try {
                                     context.startActivity(Intent.createChooser(intent, "Signaler un bug via..."))
@@ -5515,6 +6069,97 @@ fun ProfileScreen(
                         ) {
                             Text("Signaler un bug ou problème", fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f))
                             Icon(imageVector = Icons.Default.Email, contentDescription = "Rapport de Bug", modifier = Modifier.size(16.dp), tint = MaterialTheme.colorScheme.primary)
+                        }
+                    }
+
+                    HorizontalDivider(modifier = Modifier.padding(vertical = 6.dp), color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f))
+
+                    // Suggestion de fonctionnalité
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable {
+                                val intent = Intent(Intent.ACTION_SENDTO).apply {
+                                    data = Uri.parse("mailto:")
+                                    putExtra(Intent.EXTRA_EMAIL, arrayOf("helpmenorra@gmail.com"))
+                                    putExtra(Intent.EXTRA_SUBJECT, "Norra App - Suggestion de Fonctionnalité")
+                                    
+                                    val bodyText = """
+                                        Bonjour l'équipe Norra,
+                                        
+                                        J'aimerais suggérer la fonctionnalité suivante :
+                                        [Décrivez votre idée ici]
+                                        
+                                        
+                                        Pourquoi cela serait-il utile ?
+                                        [Expliquez en quoi cela vous aiderait au quotidien]
+                                    """.trimIndent()
+                                    
+                                    putExtra(Intent.EXTRA_TEXT, bodyText)
+                                }
+                                try {
+                                    context.startActivity(Intent.createChooser(intent, "Faire une suggestion via..."))
+                                } catch (e: Exception) {
+                                    Toast.makeText(context, "Aucune application email n'est installée.", Toast.LENGTH_SHORT).show()
+                                }
+                            }
+                            .padding(vertical = 8.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text("Suggérer une fonctionnalité", fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f))
+                            Icon(imageVector = Icons.Default.Create, contentDescription = "Suggestion", modifier = Modifier.size(16.dp), tint = MaterialTheme.colorScheme.primary)
+                        }
+                    }
+
+                    HorizontalDivider(modifier = Modifier.padding(vertical = 6.dp), color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f))
+
+                    // Politique de Confidentialité
+                    var showPrivacyPolicy by remember { mutableStateOf(false) }
+                    if (showPrivacyPolicy) {
+                        AlertDialog(
+                            onDismissRequest = { showPrivacyPolicy = false },
+                            title = { Text("Politique de Confidentialité") },
+                            text = {
+                                Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
+                                    Text(
+                                        text = """
+                                            Dernière mise à jour : 5 juin 2026
+
+                                            L'application Norra est conçue pour stocker l'intégralité de vos informations personnelles et de santé localement sur votre téléphone.
+
+                                            Les données collectées (humeurs, médicaments, journal, crises, contacts d'urgence) ne sont jamais transmises à nos serveurs ou à des tiers. Les seules données transmises sont vos identifiants de connexion (Firebase/Google Auth) pour permettre l'accès privé à l'application.
+
+                                            Vous disposez d'un contrôle total sur vos données et pouvez les supprimer à tout moment. Si vous avez des questions, vous pouvez contacter : helpmenorra@gmail.com
+                                        """.trimIndent(),
+                                        style = MaterialTheme.typography.bodyMedium
+                                    )
+                                }
+                            },
+                            confirmButton = {
+                                TextButton(onClick = { showPrivacyPolicy = false }) {
+                                    Text("Fermer")
+                                }
+                            }
+                        )
+                    }
+
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { showPrivacyPolicy = true }
+                            .padding(vertical = 8.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text("Politique de confidentialité", fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f))
+                            Icon(imageVector = Icons.Default.Info, contentDescription = "Politique", modifier = Modifier.size(16.dp), tint = MaterialTheme.colorScheme.primary)
                         }
                     }
 
@@ -6128,7 +6773,7 @@ fun LoginOnboardingScreen(
                             if (isNewUser) {
                                 isSurveyMode = true
                             } else {
-                                viewModel.setLoginState(true, currentEmail, name)
+                                viewModel.setLoginState(true, currentEmail, name, password)
                             }
                         } else {
                             Toast.makeText(context, "Erreur Firebase: ${authTask.exception?.message}", Toast.LENGTH_SHORT).show()
@@ -6301,7 +6946,7 @@ fun LoginOnboardingScreen(
                                                     if (task.isSuccessful) {
                                                         val user = task.result?.user
                                                         val name = user?.displayName ?: "Perrine"
-                                                        viewModel.setLoginState(true, email, name)
+                                                        viewModel.setLoginState(true, email, name, password)
                                                     } else {
                                                         Toast.makeText(context, "Erreur: ${task.exception?.message}", Toast.LENGTH_SHORT).show()
                                                     }
@@ -6566,7 +7211,7 @@ fun LoginOnboardingScreen(
                                 // Finalize Onboarding Survey
                                 viewModel.updateQcm(whyAnswer, disorderAnswer, referredAnswer)
                                 val finalName = firstName.ifBlank { "Perrine" }
-                                viewModel.setLoginState(true, email.ifBlank { "perrine@gmail.com" }, finalName)
+                                viewModel.setLoginState(true, email.ifBlank { "perrine@gmail.com" }, finalName, password)
                                 Toast.makeText(context, "Inscription finalisée !", Toast.LENGTH_SHORT).show()
                             }
                         },
@@ -6913,7 +7558,7 @@ fun CrisisHistoryScreen(viewModel: NorraViewModel, modifier: Modifier = Modifier
 
     LazyColumn(
         modifier = modifier.padding(horizontal = 16.dp),
-        contentPadding = PaddingValues(top = 16.dp, bottom = 88.dp),
+        contentPadding = PaddingValues(top = 16.dp, bottom = 16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         item {

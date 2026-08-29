@@ -30,6 +30,7 @@ enum class NorraEmotion(val id: String, val label: String) {
     PEUR("peur", "Peur"),
     HONTE("honte", "Honte"),
     IDK("idk", "IDK"),
+    FATIGUE("fatigue", "Fatigué"),
     AUTRE("autre", "Autre");
 
     companion object {
@@ -171,6 +172,11 @@ fun NorraCharacter(
                     startY = extraY,
                     endY = height * scaleCompY + extraY
                 )
+                NorraEmotion.FATIGUE -> Brush.verticalGradient(
+                    colors = listOf(Color(0xFFFFFFFF), Color(0xFFE8EBFC), Color(0xFFC3CAF5), Color(0xFF9EA9EB)),
+                    startY = extraY,
+                    endY = height * scaleCompY + extraY
+                )
                 NorraEmotion.AUTRE -> Brush.verticalGradient(
                     colors = listOf(Color(0xFFFFFFFF), Color(0xFFF4F8FF), Color(0xFFBACAFC), Color(0xFF95A4FA)),
                     startY = extraY,
@@ -192,6 +198,7 @@ fun NorraCharacter(
                 NorraEmotion.PEUR -> Brush.verticalGradient(listOf(Color(0xFF54A870), Color(0xFF2E6B43)))
                 NorraEmotion.HONTE -> Brush.verticalGradient(listOf(Color(0xFF5E5C6E), Color(0xFF35343D)))
                 NorraEmotion.IDK -> Brush.verticalGradient(listOf(Color(0xFF9E9885), Color(0xFF7A7462)))
+                NorraEmotion.FATIGUE -> Brush.verticalGradient(listOf(Color(0xFF8B97D8), Color(0xFF6773B8)))
                 NorraEmotion.AUTRE -> Brush.verticalGradient(listOf(Color(0xFF7795FA), Color(0xFF495EE4)))
             }
 
@@ -205,6 +212,7 @@ fun NorraCharacter(
                 NorraEmotion.PEUR -> Color(0xFF3BFF75)
                 NorraEmotion.HONTE -> Color(0xFF13234E)
                 NorraEmotion.IDK -> Color(0xFF13234E)
+                NorraEmotion.FATIGUE -> Color(0xFF13234E)
                 NorraEmotion.AUTRE -> Color(0xFF13234E)
             }
 
@@ -255,6 +263,7 @@ fun NorraCharacter(
                     NorraEmotion.PEUR -> Color(0x664AF2A1)
                     NorraEmotion.HONTE -> Color(0x339E9BAC)
                     NorraEmotion.IDK -> Color(0x44FFF59D)
+                    NorraEmotion.FATIGUE -> Color(0x558B97D8)
                     NorraEmotion.AUTRE -> Color(0x55E040FB)
                     else -> Color.Transparent
                 }
@@ -371,6 +380,20 @@ fun NorraCharacter(
                     radius = eyeWidth * 1.1f,
                     center = Offset(leftEyeX, faceCenterY)
                 )
+            } else if (emotion == NorraEmotion.FATIGUE) {
+                // Sleepy relaxed closed eyelids (arcs)
+                val sleepyEyePath = Path().apply {
+                    moveTo(leftEyeX - eyeWidth * 0.8f, faceCenterY)
+                    quadraticBezierTo(
+                        leftEyeX, faceCenterY + eyeHeight * 0.4f,
+                        leftEyeX + eyeWidth * 0.8f, faceCenterY
+                    )
+                }
+                drawPath(
+                    path = sleepyEyePath,
+                    color = detailsColor,
+                    style = Stroke(width = 3.2.dp.toPx(), cap = StrokeCap.Round)
+                )
             } else {
                 // Regular cozy ovals with custom blinking simulation
                 val activeEyeHeight = eyeHeight * blinkProgress
@@ -403,6 +426,19 @@ fun NorraCharacter(
                     color = detailsColor,
                     radius = eyeWidth * 1.1f,
                     center = Offset(rightEyeX, faceCenterY)
+                )
+            } else if (emotion == NorraEmotion.FATIGUE) {
+                val sleepyEyePath = Path().apply {
+                    moveTo(rightEyeX - eyeWidth * 0.8f, faceCenterY)
+                    quadraticBezierTo(
+                        rightEyeX, faceCenterY + eyeHeight * 0.4f,
+                        rightEyeX + eyeWidth * 0.8f, faceCenterY
+                    )
+                }
+                drawPath(
+                    path = sleepyEyePath,
+                    color = detailsColor,
+                    style = Stroke(width = 3.2.dp.toPx(), cap = StrokeCap.Round)
                 )
             } else {
                 val activeEyeHeight = eyeHeight * blinkProgress
@@ -587,6 +623,23 @@ fun NorraCharacter(
                         cap = StrokeCap.Round
                     )
                 }
+                NorraEmotion.FATIGUE -> {
+                    // Relaxed slightly downward-drooping sleepy eyebrows
+                    drawLine(
+                        color = detailsColor,
+                        start = Offset(leftEyeX - browWidth * 0.7f, browY + browWidth * 0.1f),
+                        end = Offset(leftEyeX + browWidth * 0.7f, browY + browWidth * 0.3f),
+                        strokeWidth = browThickness,
+                        cap = StrokeCap.Round
+                    )
+                    drawLine(
+                        color = detailsColor,
+                        start = Offset(rightEyeX - browWidth * 0.7f, browY + browWidth * 0.3f),
+                        end = Offset(rightEyeX + browWidth * 0.7f, browY + browWidth * 0.1f),
+                        strokeWidth = browThickness,
+                        cap = StrokeCap.Round
+                    )
+                }
                 else -> { /* No specific eyebrows for neutral smiley states */ }
             }
 
@@ -637,6 +690,21 @@ fun NorraCharacter(
                         path = smilePath,
                         color = detailsColor,
                         style = Stroke(width = 3.5.dp.toPx(), cap = StrokeCap.Round)
+                    )
+                }
+                NorraEmotion.FATIGUE -> {
+                    // Soft gentle relaxed sleepy mouth curve
+                    val tiredMouthPath = Path().apply {
+                        moveTo(width / 2 - mouthWidth * 0.7f, mouthY)
+                        quadraticBezierTo(
+                            width / 2, mouthY + mouthWidth * 0.25f,
+                            width / 2 + mouthWidth * 0.7f, mouthY
+                        )
+                    }
+                    drawPath(
+                        path = tiredMouthPath,
+                        color = detailsColor,
+                        style = Stroke(width = 3.2.dp.toPx(), cap = StrokeCap.Round)
                     )
                 }
                 NorraEmotion.COLERE, NorraEmotion.TRISTE, NorraEmotion.HONTE -> {

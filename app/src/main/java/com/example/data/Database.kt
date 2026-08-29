@@ -38,7 +38,10 @@ data class Medication(
     val pillCount: Int,
     val timeToTake: String, // e.g. "08:00"
     val reminderEnabled: Boolean = true,
-    val intakes: String = "" // "time,count;time,count" - overrides timeToTake/pillCount if not empty
+    val intakes: String = "", // "time,count;time,count" - overrides timeToTake/pillCount if not empty
+    val molecule: String = "", // Nom de la molécule (optionnel)
+    val mealTiming: String = "", // "before", "during", "after", "indifferent"
+    val posologyNotes: String = "" // Posologie & infos supplémentaires (optionnel)
 )
 
 @Entity(tableName = "medication_logs")
@@ -109,7 +112,7 @@ interface NorraDao {
     suspend fun deleteCrisisLogById(id: Long)
 }
 
-@Database(entities = [MoodEntry::class, ContactPerson::class, Medication::class, MedicationLog::class, CrisisLog::class], version = 4, exportSchema = false)
+@Database(entities = [MoodEntry::class, ContactPerson::class, Medication::class, MedicationLog::class, CrisisLog::class], version = 5, exportSchema = false)
 abstract class NorraDatabase : RoomDatabase() {
     abstract fun norraDao(): NorraDao
 }
@@ -148,6 +151,14 @@ object DatabaseProvider {
         }
     }
 
+    private val MIGRATION_4_5 = object : androidx.room.migration.Migration(4, 5) {
+        override fun migrate(db: androidx.sqlite.db.SupportSQLiteDatabase) {
+            db.execSQL("ALTER TABLE medications ADD COLUMN molecule TEXT NOT NULL DEFAULT ''")
+            db.execSQL("ALTER TABLE medications ADD COLUMN mealTiming TEXT NOT NULL DEFAULT ''")
+            db.execSQL("ALTER TABLE medications ADD COLUMN posologyNotes TEXT NOT NULL DEFAULT ''")
+        }
+    }
+
     fun getDatabase(context: Context): NorraDatabase {
         return db ?: synchronized(this) {
             val instance = Room.databaseBuilder(
@@ -155,7 +166,7 @@ object DatabaseProvider {
                 NorraDatabase::class.java,
                 "norra_database"
             )
-            .addMigrations(MIGRATION_2_3)
+            .addMigrations(MIGRATION_2_3, MIGRATION_4_5)
             .fallbackToDestructiveMigration()
             .build()
             db = instance

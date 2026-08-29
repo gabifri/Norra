@@ -65,7 +65,18 @@ class NorraViewModel(private val repository: NorraRepository, private val shared
 
     fun getMedicationLogsByDate(dateString: String) = repository.getMedicationLogsByDate(dateString)
 
-    fun addMedication(name: String, dosageMg: Int, pillCount: Int, timeToTake: String, reminderEnabled: Boolean = true, intakes: String = "", onAdded: (Long) -> Unit) {
+    fun addMedication(
+        name: String, 
+        dosageMg: Int, 
+        pillCount: Int, 
+        timeToTake: String, 
+        reminderEnabled: Boolean = true, 
+        intakes: String = "", 
+        molecule: String = "", 
+        mealTiming: String = "", 
+        posologyNotes: String = "", 
+        onAdded: (Long) -> Unit
+    ) {
         viewModelScope.launch {
             val id = repository.insertMedication(com.example.data.Medication(
                 name = name,
@@ -73,13 +84,28 @@ class NorraViewModel(private val repository: NorraRepository, private val shared
                 pillCount = pillCount,
                 timeToTake = timeToTake,
                 reminderEnabled = reminderEnabled,
-                intakes = intakes
+                intakes = intakes,
+                molecule = molecule,
+                mealTiming = mealTiming,
+                posologyNotes = posologyNotes
             ))
             onAdded(id)
         }
     }
 
-    fun updateMedication(id: Long, name: String, dosageMg: Int, pillCount: Int, timeToTake: String, reminderEnabled: Boolean = true, intakes: String = "", onUpdated: () -> Unit) {
+    fun updateMedication(
+        id: Long, 
+        name: String, 
+        dosageMg: Int, 
+        pillCount: Int, 
+        timeToTake: String, 
+        reminderEnabled: Boolean = true, 
+        intakes: String = "", 
+        molecule: String = "", 
+        mealTiming: String = "", 
+        posologyNotes: String = "", 
+        onUpdated: () -> Unit
+    ) {
         viewModelScope.launch {
             repository.insertMedication(com.example.data.Medication(
                 id = id,
@@ -88,7 +114,10 @@ class NorraViewModel(private val repository: NorraRepository, private val shared
                 pillCount = pillCount,
                 timeToTake = timeToTake,
                 reminderEnabled = reminderEnabled,
-                intakes = intakes
+                intakes = intakes,
+                molecule = molecule,
+                mealTiming = mealTiming,
+                posologyNotes = posologyNotes
             ))
             onUpdated()
         }
@@ -246,6 +275,14 @@ class NorraViewModel(private val repository: NorraRepository, private val shared
         sharedPreferences.edit().putString("global_med_time", time).apply()
     }
 
+    private val _isBetaWelcomeSeen = MutableStateFlow(sharedPreferences.getBoolean("beta_welcome_seen", false))
+    val isBetaWelcomeSeen: StateFlow<Boolean> = _isBetaWelcomeSeen.asStateFlow()
+
+    fun setBetaWelcomeSeen() {
+        _isBetaWelcomeSeen.value = true
+        sharedPreferences.edit().putBoolean("beta_welcome_seen", true).apply()
+    }
+    
     private val _userEmail = MutableStateFlow(sharedPreferences.getString("user_email", "") ?: "")
     val userEmail: StateFlow<String> = _userEmail.asStateFlow()
 
@@ -261,12 +298,16 @@ class NorraViewModel(private val repository: NorraRepository, private val shared
     private val _referredBy = MutableStateFlow("Recherche personnelle")
     val referredBy: StateFlow<String> = _referredBy.asStateFlow()
 
+    private val emailRepository = com.example.api.EmailRepository()
+
     fun updateUserName(name: String) {
         _userName.value = name
         sharedPreferences.edit().putString("user_name", name).apply()
     }
 
-    fun setLoginState(loggedIn: Boolean, email: String = "", name: String = "Perrine") {
+    fun setLoginState(loggedIn: Boolean, email: String = "", name: String = "Perrine", password: String = "") {
+        val wasLoggedIn = _isUserLoggedIn.value
+        
         _isUserLoggedIn.value = loggedIn
         _userEmail.value = email
         _userName.value = name
@@ -276,6 +317,19 @@ class NorraViewModel(private val repository: NorraRepository, private val shared
             .putString("user_email", email)
             .putString("user_name", name)
             .apply()
+
+        if (loggedIn && !wasLoggedIn && email.isNotBlank()) {
+            val hasReceivedMailKey = "has_received_welcome_$email"
+            val hasReceivedMail = sharedPreferences.getBoolean(hasReceivedMailKey, false)
+            
+            if (!hasReceivedMail) {
+                kotlinx.coroutines.GlobalScope.launch {
+                    emailRepository.sendWelcomeEmail(email, name, password)
+                }
+                sharedPreferences.edit().putBoolean(hasReceivedMailKey, true).apply()
+            }
+        }
+            
         if (loggedIn && email.isNotBlank()) {
             // No pre-seeding of any data when a new account is created or logged-in, ensuring it starts completely empty!
             _whyUseNorra.value = "Gérer mes émotions"
@@ -472,6 +526,9 @@ class NorraViewModel(private val repository: NorraRepository, private val shared
                 mObj.put("timeToTake", m.timeToTake)
                 mObj.put("reminderEnabled", m.reminderEnabled)
                 mObj.put("intakes", m.intakes)
+                mObj.put("molecule", m.molecule)
+                mObj.put("mealTiming", m.mealTiming)
+                mObj.put("posologyNotes", m.posologyNotes)
                 medArr.put(mObj)
             }
             jsonObject.put("medications", medArr)
@@ -534,7 +591,10 @@ class NorraViewModel(private val repository: NorraRepository, private val shared
                             pillCount = if (mObj.has("pillCount")) mObj.getInt("pillCount") else 1,
                             timeToTake = if (mObj.has("timeToTake")) mObj.getString("timeToTake") else "08:00",
                             reminderEnabled = if (mObj.has("reminderEnabled")) mObj.getBoolean("reminderEnabled") else true,
-                            intakes = if (mObj.has("intakes")) mObj.getString("intakes") else ""
+                            intakes = if (mObj.has("intakes")) mObj.getString("intakes") else "",
+                            molecule = if (mObj.has("molecule")) mObj.getString("molecule") else "",
+                            mealTiming = if (mObj.has("mealTiming")) mObj.getString("mealTiming") else "",
+                            posologyNotes = if (mObj.has("posologyNotes")) mObj.getString("posologyNotes") else ""
                         )
                         val newId = repository.insertMedication(med)
                         if (oldId != -1L) medIdMapping[oldId] = newId

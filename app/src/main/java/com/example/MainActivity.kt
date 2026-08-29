@@ -114,6 +114,23 @@ fun NorraApp(viewModel: NorraViewModel) {
   if (!isLoggedIn) {
     com.example.ui.LoginOnboardingScreen(viewModel = viewModel)
   } else {
+    val isBetaWelcomeSeen by viewModel.isBetaWelcomeSeen.collectAsState()
+    
+    if (!isBetaWelcomeSeen) {
+        AlertDialog(
+            onDismissRequest = { viewModel.setBetaWelcomeSeen() },
+            title = { Text("Bienvenue sur Norra (Bêta)") },
+            text = { 
+                Text("Norra est actuellement en version de test (bêta).\n\nVotre aide est précieuse ! Si vous rencontrez un bug ou un comportement inattendu, veuillez envoyer un rapport de bug via la page Ressources de l'application.\n\nN'oubliez pas également de faire les mises à jour régulièrement pour profiter des dernières corrections.", style = MaterialTheme.typography.bodyMedium)
+            },
+            confirmButton = {
+                TextButton(onClick = { viewModel.setBetaWelcomeSeen() }) {
+                    Text("J'ai compris")
+                }
+            }
+        )
+    }
+
     Scaffold(
       modifier = Modifier.fillMaxSize(),
       bottomBar = {
@@ -122,36 +139,76 @@ fun NorraApp(viewModel: NorraViewModel) {
             NavigationBarItem(
               selected = currentTab == 0,
               onClick = { viewModel.selectTab(0) },
-              icon = { Icon(imageVector = Icons.Default.Home, contentDescription = "Norra & SOS") },
-              label = { Text("Norra & SOS", style = MaterialTheme.typography.labelSmall) },
+              icon = { Icon(imageVector = Icons.Default.Home, contentDescription = "Accueil") },
+              label = { 
+                Text(
+                  text = "Accueil", 
+                  style = MaterialTheme.typography.labelSmall,
+                  maxLines = 1,
+                  softWrap = false,
+                  overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+                ) 
+              },
               modifier = Modifier.testTag("tab_home")
             )
             NavigationBarItem(
               selected = currentTab == 1,
               onClick = { viewModel.selectTab(1) },
-              icon = { Icon(imageVector = Icons.Default.Favorite, contentDescription = "Suivi Émotions") },
-              label = { Text("Suivi", style = MaterialTheme.typography.labelSmall) },
+              icon = { Icon(imageVector = Icons.Default.Favorite, contentDescription = "Suivi") },
+              label = { 
+                Text(
+                  text = "Suivi", 
+                  style = MaterialTheme.typography.labelSmall,
+                  maxLines = 1,
+                  softWrap = false,
+                  overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+                ) 
+              },
               modifier = Modifier.testTag("tab_tracker")
             )
             NavigationBarItem(
               selected = currentTab == 2,
               onClick = { viewModel.selectTab(2) },
               icon = { Icon(imageVector = Icons.Default.Face, contentDescription = "Exercices") },
-              label = { Text("Exercices", style = MaterialTheme.typography.labelSmall) },
+              label = { 
+                Text(
+                  text = "Exercices", 
+                  style = MaterialTheme.typography.labelSmall,
+                  maxLines = 1,
+                  softWrap = false,
+                  overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+                ) 
+              },
               modifier = Modifier.testTag("tab_exercises")
             )
             NavigationBarItem(
               selected = currentTab == 3,
               onClick = { viewModel.selectTab(3) },
-              icon = { Icon(imageVector = Icons.Default.Call, contentDescription = "Contacts Relais") },
-              label = { Text("Contacts", style = MaterialTheme.typography.labelSmall) },
+              icon = { Icon(imageVector = Icons.Default.Call, contentDescription = "Contacts") },
+              label = { 
+                Text(
+                  text = "Contacts", 
+                  style = MaterialTheme.typography.labelSmall,
+                  maxLines = 1,
+                  softWrap = false,
+                  overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+                ) 
+              },
               modifier = Modifier.testTag("tab_contacts")
             )
             NavigationBarItem(
               selected = currentTab == 4,
               onClick = { viewModel.selectTab(4) },
               icon = { Icon(imageVector = Icons.Default.Info, contentDescription = "Ressources") },
-              label = { Text("Ressources", style = MaterialTheme.typography.labelSmall) },
+              label = { 
+                Text(
+                  text = "Ressources", 
+                  style = MaterialTheme.typography.labelSmall,
+                  maxLines = 1,
+                  softWrap = false,
+                  overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+                ) 
+              },
               modifier = Modifier.testTag("tab_resources")
             )
           }
